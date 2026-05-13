@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/meubanco
+    username: admin
+    password: adminpassword
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

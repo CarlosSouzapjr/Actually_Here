@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: meubanco_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: meubanco
+    ports:
+      - "5432:5432"
