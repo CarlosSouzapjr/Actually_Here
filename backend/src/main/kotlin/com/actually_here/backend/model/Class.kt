@@ -10,13 +10,21 @@ data class Class(
     val id: Long? = null,
     
     @Column(nullable = false)
-    val name: String, // Ex: "Sistemas Distribuídos - 2026.1"
+    val name: String,
     
     @Column(nullable = false)
-    val subjectCode: String, // Código da Disciplina
+    val subjectCode: String,
     
-    // Relação: Muitos alunos/turmas para um professor
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "professor_id", nullable = false)
-    val professor: User
+    val professor: User,
+
+    // Lista de Alunos regulares
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "class_students", // Cria outra tabela intermediária no banco
+        joinColumns = [JoinColumn(name = "class_id")],
+        inverseJoinColumns = [JoinColumn(name = "user_id")]
+    )
+    val students: MutableSet<User> = mutableSetOf()
 )

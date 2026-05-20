@@ -14,29 +14,28 @@ class ClassController(
     private val userRepository: UserRepository
 ) {
 
-    // Criar nova turma
+    // Criar nova turma (O usuário que cria já entra como administrador)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody classRequest: ClassRequest): Class {
-        val professor = userRepository.findById(classRequest.professorId)
+    fun create(@RequestBody request: ClassRequest): Class {
+        // Busca quem está tentando criar a turma
+        val professor = userRepository.findById(request.professorId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Professor não encontrado") }
         
         val newClass = Class(
-            name = classRequest.name,
-            subjectCode = classRequest.subjectCode,
+            name = request.name,
+            subjectCode = request.subjectCode,
             professor = professor
         )
+
         return classRepository.save(newClass)
     }
 
-    // Listar todas as turmas cadastradas
-    @GetMapping
-    fun listAll(): List<Class> = classRepository.findAll()
+    @GetMapping("/Professor/{id}")
+    fun listByProfessorId(@PathVariable id: Long): List<Class> { // ou Turma
+        return classRepository.findByProfessorId(id)
+    }
 
-    // Listar turmas de um professor específico
-    @GetMapping("/professor/{id}")
-    fun listByProfessor(@PathVariable id: Long): List<Class> = 
-        classRepository.findByProfessorId(id)
 }
 
 // Classe auxiliar para receber os dados do Flutter/Frontend
