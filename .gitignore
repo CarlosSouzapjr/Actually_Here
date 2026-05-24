@@ -56,8 +56,7 @@ logs/
 hs_err_pid*
 replay_pid*
 
-# Keep the Gradle wrapper committed
-!**/gradle/wrapper/gradle-wrapper.jar
+# Keep the Gradle wrapper scripts and properties committed
 !**/gradle/wrapper/gradle-wrapper.properties
 !**/gradlew
 !**/gradlew.bat
