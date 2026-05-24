@@ -12,6 +12,9 @@ desktop.ini
 *.iml
 *.ipr
 *.iws
+.classpath
+.project
+.settings/
 .atom/
 *.swp
 *.swo
@@ -44,6 +47,7 @@ logs/
 .gradle/
 **/build/
 **/out/
+**/bin/
 **/.kotlin/
 *.class
 *.jar
