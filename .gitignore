@@ -1,41 +1,50 @@
-# Operating system files
+# ==============================================================================
+# OS Files
+# ==============================================================================
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDEs and editors
+# ==============================================================================
+# IDEs and Editors
+# ==============================================================================
 .idea/
-.vscode/
 *.iml
 *.ipr
 *.iws
+.atom/
 *.swp
 *.swo
 *~
+.history
 
-# Local environment files
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control.
+# Comment out the line below if you want to track them.
+.vscode/
+
+# ==============================================================================
+# Local Environment Files
+# ==============================================================================
 .env
 .env.*
 !.env.example
 !.env.template
 
+# ==============================================================================
 # Logs
+# ==============================================================================
 *.log
 logs/
+.buildlog/
 
-# Gradle / Kotlin / Spring Boot
+# ==============================================================================
+# Gradle / Kotlin / Spring Boot / Java
+# ==============================================================================
 .gradle/
 **/build/
 **/out/
 **/.kotlin/
-
-# Keep the Gradle wrapper committed
-!**/gradle/wrapper/gradle-wrapper.jar
-!**/gradle/wrapper/gradle-wrapper.properties
-!**/gradlew
-!**/gradlew.bat
-
-# Java runtime artifacts
 *.class
 *.jar
 *.war
@@ -43,13 +52,45 @@ logs/
 hs_err_pid*
 replay_pid*
 
-# Test and coverage output
+# Keep the Gradle wrapper committed
+!**/gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.properties
+!**/gradlew
+!**/gradlew.bat
+
+# ==============================================================================
+# Test and Coverage Output
+# ==============================================================================
 coverage/
+/coverage/
 **/target/
 **/reports/
 **/test-results/
 
-# Frontend dependencies and builds
+# ==============================================================================
+# Flutter / Dart / Android / iOS
+# ==============================================================================
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# ==============================================================================
+# Frontend Dependencies and Builds
+# ==============================================================================
 node_modules/
 dist/
 .next/
@@ -57,12 +98,21 @@ dist/
 .svelte-kit/
 *.tsbuildinfo
 
-# Docker and local data
+# ==============================================================================
+# Docker and Local Data
+# ==============================================================================
 docker-data/
 .docker/
 
-# Temporary files
+# ==============================================================================
+# Temporary and Miscellaneous Files
+# ==============================================================================
 tmp/
 temp/
 *.tmp
 *.bak
+*.pyc
+.build/
+.svn/
+.swiftpm/
+migrate_working_dir/
