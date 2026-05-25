@@ -2,18 +2,17 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MqttService {
   late MqttServerClient client;
 
   MqttService() {
-    // Para Android Emulator usar 10.0.2.2, para dispositivo real usar o IP da máquina
-    // Como estamos em ambiente de desenvolvimento local, vamos usar o IP padrão
-    // que funciona na maioria dos setups Linux/Docker.
-    String brokerAddress = Platform.isAndroid ? '10.0.2.2' : 'localhost';
+    String brokerAddress = dotenv.env['SERVER_IP'] ?? 'localhost';
+    int port = int.parse(dotenv.env['MQTT_PORT'] ?? '1883');
     
     client = MqttServerClient(brokerAddress, 'flutter_client_${DateTime.now().millisecondsSinceEpoch}');
-    client.port = 1883;
+    client.port = port;
     client.keepAlivePeriod = 20;
     client.onDisconnected = onDisconnected;
     client.onConnected = onConnected;

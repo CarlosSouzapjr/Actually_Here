@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AttendanceService {
-  // Ajuste o IP conforme necessário (10.0.2.2 para emulador Android)
-  final String baseUrl = 'http://localhost:8080/api/attendance';
+  // Busca o IP e porta do arquivo .env
+  final String baseUrl = 'http://${dotenv.env['SERVER_IP']}:${dotenv.env['API_PORT']}/api/attendance';
 
   Future<Map<String, dynamic>?> startSession(int classId) async {
     try {
