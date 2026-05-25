@@ -1,5 +1,12 @@
 package com.actually_here.backend.config
 
+import com.actually_here.backend.model.AttendanceRecord
+import com.actually_here.backend.model.SessionStatus
+import com.actually_here.backend.repository.AttendanceRecordRepository
+import com.actually_here.backend.repository.AttendanceSessionRepository
+import com.actually_here.backend.repository.UserRepository
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -14,7 +21,14 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.MessageHandler
 
 @Configuration
-class MqttConfig {
+class MqttConfig(
+    private val attendanceRecordRepository: AttendanceRecordRepository,
+    private val attendanceSessionRepository: AttendanceSessionRepository,
+    private val userRepository: UserRepository
+) {
+
+    @Bean
+    fun objectMapper(): ObjectMapper = jacksonObjectMapper()
 
     @Bean
     fun mqttClientFactory(): MqttPahoClientFactory {
@@ -47,13 +61,42 @@ class MqttConfig {
 
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
-    fun handler(): MessageHandler {
+    fun handler(objectMapper: ObjectMapper): MessageHandler {
         return MessageHandler { message ->
             val payload = message.payload.toString()
             val topic = message.headers["mqtt_receivedTopic"].toString()
-            println("Mensagem MQTT recebida no tópico [$topic]: $payload")
             
-            // Futuramente, aqui chamaremos um serviço para processar o ping de presença
+            try {
+                // Tópico esperado: presenca/{classId}/{userId}
+                val topicParts = topic.split("/")
+                if (topicParts.size == 3) {
+                    val classId = topicParts[1].toLong()
+                    val userId = topicParts[2].toLong()
+                    
+                    val data = objectMapper.readTree(payload)
+                    val distance = data.get("distancia").asDouble()
+
+                    // Busca a sessão ativa para esta turma
+                    val session = attendanceSessionRepository.findFirstByClassroomIdAndStatus(classId, SessionStatus.ACTIVE)
+                    
+                    if (session.isPresent) {
+                        val user = userRepository.findById(userId)
+                        if (user.isPresent) {
+                            val record = AttendanceRecord(
+                                session = session.get(),
+                                user = user.get(),
+                                distance = distance
+                            )
+                            attendanceRecordRepository.save(record)
+                            println("Presença registrada: Aluno ${user.get().name} na Turma ${classId} (Distância: $distance m)")
+                        }
+                    } else {
+                        println("Aviso: Ping recebido para turma $classId, mas não há sessão ativa.")
+                    }
+                }
+            } catch (e: Exception) {
+                println("Erro ao processar mensagem MQTT: ${e.message}")
+            }
         }
     }
 }

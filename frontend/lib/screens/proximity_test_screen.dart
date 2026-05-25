@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/proximity/professor_beacon_service.dart';
 import '../services/proximity/student_scanner_service.dart';
 import '../services/mqtt_service.dart';
+import '../services/attendance_service.dart';
 
 class ProximityTestScreen extends StatefulWidget {
   const ProximityTestScreen({super.key});
@@ -15,8 +16,11 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
   final ProfessorBeaconService _beaconService = ProfessorBeaconService();
   final StudentScannerService _scannerService = StudentScannerService();
   final MqttService _mqttService = MqttService();
+  final AttendanceService _attendanceService = AttendanceService();
 
   final String testUuid = '39ED98FF-2900-441A-802F-9C398FC199D2';
+  final int testClassId = 1; // ID de teste da turma
+  int? _currentSessionId;
   
   String _status = 'Aguardando...';
   StreamSubscription<double>? _scanSubscription;
@@ -28,33 +32,45 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
   }
 
   Future<void> _startProfessor() async {
-    _updateStatus('Iniciando transmissão...');
+    _updateStatus('Iniciando sessão no servidor...');
     try {
-      await _beaconService.startBroadcasting(testUuid);
-      _updateStatus('Transmitindo... (Professor)');
+      final session = await _attendanceService.startSession(testClassId);
+      if (session != null) {
+        _currentSessionId = session['id'];
+        _updateStatus('Sessão ${session['id']} iniciada. Ligando Beacon...');
+        await _beaconService.startBroadcasting(testUuid);
+        _updateStatus('Transmitindo... (Professor)\nSessão ID: $_currentSessionId');
+      } else {
+        _updateStatus('Erro ao iniciar sessão no backend.');
+      }
     } catch (e) {
-      _updateStatus('Erro ao transmitir: $e');
+      _updateStatus('Erro: $e');
     }
   }
 
   Future<void> _startStudent() async {
-    _updateStatus('Conectando ao MQTT e iniciando scan...');
+    _updateStatus('Verificando se há aula ativa...');
     try {
+      final session = await _attendanceService.getActiveSession(testClassId);
+      if (session == null) {
+        _updateStatus('Não há sessão ativa para esta turma no momento.');
+        return;
+      }
+
+      _updateStatus('Sessão ativa encontrada! Conectando MQTT...');
       bool connected = await _mqttService.connect();
       if (!connected) {
         _updateStatus('Erro ao conectar ao MQTT. Verifique o broker.');
         return;
       }
 
-      _scanSubscription?.cancel(); // Cancela scan anterior se existir
+      _scanSubscription?.cancel();
       
       _scanSubscription = _scannerService.scanForProfessor(testUuid).listen(
         (distance) {
           if (distance >= 0) {
             _updateStatus('Professor encontrado a ${distance.toStringAsFixed(2)} metros');
-            // Envia o ping de presença via MQTT
-            // Usando IDs fixos (1 e 123) para o teste
-            _mqttService.publishPresence(1, 123, distance);
+            _mqttService.publishPresence(testClassId, 123, distance);
           } else {
             _updateStatus('Sinal encontrado, mas RSSI inválido.');
           }
@@ -73,7 +89,12 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
   Future<void> _stopAll() async {
     _updateStatus('Parando serviços...');
     
-    // Para professor
+    // Para professor: Encerra a sessão no backend se houver uma
+    if (_currentSessionId != null) {
+      await _attendanceService.endSession(_currentSessionId!);
+      _currentSessionId = null;
+    }
+
     await _beaconService.stopBroadcasting();
     
     // Para aluno
@@ -81,7 +102,7 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
     await _scannerService.stopScanning();
     _mqttService.disconnect();
 
-    _updateStatus('Parado. Aguardando...');
+    _updateStatus('Parado. Sessão encerrada.');
   }
 
   @override
