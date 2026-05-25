@@ -23,6 +23,7 @@ subprojects {
         plugins.withId("com.android.library") {
             extensions.configure<LibraryExtension>("android") {
                 namespace = "pl.pszklarska.beacon_broadcast"
+                compileSdk = 36
             }
         }
 
@@ -33,7 +34,22 @@ subprojects {
         }
     }
 }
+
 subprojects {
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryExtension>("android") {
+            compileSdk = 36
+        }
+    }
+
+    project.afterEvaluate {
+        plugins.withId("com.android.library") {
+            extensions.findByType(LibraryExtension::class.java)?.apply {
+                compileSdk = 36
+            }
+        }
+    }
+
     project.evaluationDependsOn(":app")
 }
 

@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../services/proximity/professor_beacon_service.dart';
 import '../services/proximity/student_scanner_service.dart';
+import 'proximity_test_screen.dart';
 
 class ClassScreen extends StatefulWidget {
   final String turmaId;
@@ -90,7 +91,21 @@ class _ClassScreenState extends State<ClassScreen> {
     final db = context.watch<DatabaseService>();
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.nomeTurma)),
+      appBar: AppBar(
+        title: Text(widget.nomeTurma),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bluetooth),
+            tooltip: 'Testar Proximidade',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProximityTestScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
