@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/proximity/professor_beacon_service.dart';
 import '../services/proximity/student_scanner_service.dart';
+import '../services/mqtt_service.dart';
 
 class ProximityTestScreen extends StatefulWidget {
   const ProximityTestScreen({super.key});
@@ -13,6 +14,7 @@ class ProximityTestScreen extends StatefulWidget {
 class _ProximityTestScreenState extends State<ProximityTestScreen> {
   final ProfessorBeaconService _beaconService = ProfessorBeaconService();
   final StudentScannerService _scannerService = StudentScannerService();
+  final MqttService _mqttService = MqttService();
 
   final String testUuid = '39ED98FF-2900-441A-802F-9C398FC199D2';
   
@@ -36,14 +38,23 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
   }
 
   Future<void> _startStudent() async {
-    _updateStatus('Solicitando permissões e iniciando scan...');
+    _updateStatus('Conectando ao MQTT e iniciando scan...');
     try {
+      bool connected = await _mqttService.connect();
+      if (!connected) {
+        _updateStatus('Erro ao conectar ao MQTT. Verifique o broker.');
+        return;
+      }
+
       _scanSubscription?.cancel(); // Cancela scan anterior se existir
       
       _scanSubscription = _scannerService.scanForProfessor(testUuid).listen(
         (distance) {
           if (distance >= 0) {
             _updateStatus('Professor encontrado a ${distance.toStringAsFixed(2)} metros');
+            // Envia o ping de presença via MQTT
+            // Usando IDs fixos (1 e 123) para o teste
+            _mqttService.publishPresence(1, 123, distance);
           } else {
             _updateStatus('Sinal encontrado, mas RSSI inválido.');
           }
@@ -53,7 +64,7 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
         }
       );
 
-      _updateStatus('Escaneando...');
+      _updateStatus('Escaneando e enviando pings...');
     } catch (e) {
       _updateStatus('Erro ao iniciar scan: $e');
     }
@@ -68,6 +79,7 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
     // Para aluno
     _scanSubscription?.cancel();
     await _scannerService.stopScanning();
+    _mqttService.disconnect();
 
     _updateStatus('Parado. Aguardando...');
   }
