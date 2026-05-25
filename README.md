@@ -62,28 +62,28 @@ Sistema automatizado de controle de frequência acadêmica baseado em proximidad
 
 ### Inicialização da Infraestrutura
 Certifique-se de que o Docker está rodando e execute:
-\`\`\`bash
+```bash
 docker compose up -d
-\`\`\`
+```
 
 ### Configuração de Ambiente (Frontend)
 Crie um arquivo \`.env\` na raiz da pasta \`frontend/\` seguindo o modelo:
-\`\`\`env
+```env
 SERVER_IP=192.168.x.x
 API_PORT=8080
 MQTT_PORT=1883
-\`\`\`
+```
 *Nota: Utilize o IP da sua máquina na rede local para testes em dispositivos físicos.*
 
 ### Execução do Backend
-\`\`\`bash
+```bash
 cd backend
 ./gradlew bootRun
-\`\`\`
+```
 
 ### Execução do Frontend
-\`\`\`bash
+```bash
 cd frontend
 flutter pub get
 flutter run
-\`\`\`
+```
