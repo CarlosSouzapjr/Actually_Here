@@ -1,3 +1,7 @@
+import com.android.build.gradle.LibraryExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 allprojects {
     repositories {
         google()
@@ -14,6 +18,20 @@ rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+
+    if (project.name == "beacon_broadcast") {
+        plugins.withId("com.android.library") {
+            extensions.configure<LibraryExtension>("android") {
+                namespace = "pl.pszklarska.beacon_broadcast"
+            }
+        }
+
+        tasks.withType<KotlinCompile>().configureEach {
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_1_8)
+            }
+        }
+    }
 }
 subprojects {
     project.evaluationDependsOn(":app")
