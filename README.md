@@ -69,7 +69,7 @@ docker compose up -d
 ### Configuração de Ambiente (Frontend)
 Crie um arquivo \`.env\` na raiz da pasta \`frontend/\` seguindo o modelo:
 ```env
-SERVER_IP=192.168.x.x
+SERVER_IP=192.168.x.x // localhost = 127.0.0.1
 API_PORT=8080
 MQTT_PORT=1883
 ```
