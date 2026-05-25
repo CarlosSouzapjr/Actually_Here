@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import 'class.dart';
 import 'login.dart';
+import 'create_class_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -71,6 +72,15 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreateClassScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
