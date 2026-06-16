@@ -3,9 +3,9 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/meubanco
-    username: admin
-    password: adminpassword
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/meubanco}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:adminpassword}
   jpa:
     hibernate:
       ddl-auto: update

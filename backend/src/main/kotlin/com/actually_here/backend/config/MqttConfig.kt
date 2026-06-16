@@ -8,6 +8,7 @@ import com.actually_here.backend.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.integration.annotation.ServiceActivator
@@ -24,7 +25,9 @@ import org.springframework.messaging.MessageHandler
 class MqttConfig(
     private val attendanceRecordRepository: AttendanceRecordRepository,
     private val attendanceSessionRepository: AttendanceSessionRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    @Value("\${mqtt.broker-url:tcp://localhost:1883}")
+    private val mqttBrokerUrl: String
 ) {
 
     @Bean
@@ -34,7 +37,7 @@ class MqttConfig(
     fun mqttClientFactory(): MqttPahoClientFactory {
         val factory = DefaultMqttPahoClientFactory()
         val options = MqttConnectOptions()
-        options.serverURIs = arrayOf("tcp://localhost:1883")
+        options.serverURIs = arrayOf(mqttBrokerUrl)
         options.isCleanSession = true
         factory.connectionOptions = options
         return factory

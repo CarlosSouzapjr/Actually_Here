@@ -8,6 +8,11 @@ services:
       POSTGRES_DB: meubanco
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d meubanco"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   mosquitto:
     image: eclipse-mosquitto:2
@@ -19,3 +24,20 @@ services:
     ports:
       - "1883:1883"
       - "9001:9001"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: actually_here_backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/meubanco
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: adminpassword
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started

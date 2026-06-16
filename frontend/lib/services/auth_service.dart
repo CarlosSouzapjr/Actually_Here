@@ -11,59 +11,75 @@ class AuthService extends ChangeNotifier {
   UserModel? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null;
 
-  // Login simulado (MOCK)
   Future<bool> login(String email, String password) async {
     await Future.delayed(const Duration(seconds: 1));
 
     final cleanEmail = email.trim();
-    if (cleanEmail.isNotEmpty) {
-      final Map<String, dynamic>? backendUser;
-      try {
-        backendUser = await _syncBackendUser(cleanEmail);
-      } catch (_) {
-        return false;
-      }
+    if (cleanEmail.isEmpty) return false;
 
-      _currentUser = UserModel(
-        id: 'user_123', // Usamos um ID fixo para testar as duas visões
-        backendId: backendUser?['id'] as int?,
-        email: cleanEmail,
-        nome: cleanEmail.split('@').first.toUpperCase(),
-      );
-      notifyListeners();
-      return true;
-    }
+    final backendUser = await _findBackendUserByEmail(cleanEmail);
+    if (backendUser == null) return false;
 
-    return false; // Falha
+    _currentUser = _toUserModel(backendUser);
+    notifyListeners();
+    return true;
   }
 
-  Future<Map<String, dynamic>?> _syncBackendUser(String email) async {
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final cleanName = name.trim();
+    final cleanEmail = email.trim();
+    if (cleanName.isEmpty || cleanEmail.isEmpty) return false;
+
+    final existingUser = await _findBackendUserByEmail(cleanEmail);
+    if (existingUser != null) return false;
+
     final usersUrl = ServerConfig.current.apiUrl('users');
-    final response = await http.get(Uri.parse(usersUrl));
-
-    if (response.statusCode == 200) {
-      final users = jsonDecode(response.body) as List<dynamic>;
-      for (final user in users) {
-        final map = user as Map<String, dynamic>;
-        if (map['email'] == email) return map;
-      }
-    }
-
     final createResponse = await http.post(
       Uri.parse(usersUrl),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'name': email.split('@').first.toUpperCase(),
-        'email': email,
-        'authId': 'mock:$email',
+        'name': cleanName,
+        'email': cleanEmail,
+        'authId': 'mock:$cleanEmail',
       }),
     );
 
-    if (createResponse.statusCode == 201) {
-      return jsonDecode(createResponse.body) as Map<String, dynamic>;
+    if (createResponse.statusCode != 201) return false;
+
+    _currentUser = _toUserModel(
+      jsonDecode(createResponse.body) as Map<String, dynamic>,
+    );
+    notifyListeners();
+    return true;
+  }
+
+  Future<Map<String, dynamic>?> _findBackendUserByEmail(String email) async {
+    final usersUrl = ServerConfig.current.apiUrl('users');
+    final response = await http.get(Uri.parse(usersUrl));
+
+    if (response.statusCode != 200) return null;
+
+    final users = jsonDecode(response.body) as List<dynamic>;
+    for (final user in users) {
+      final map = user as Map<String, dynamic>;
+      if (map['email'] == email) return map;
     }
 
-    throw Exception('Falha ao sincronizar usuário: ${createResponse.body}');
+    return null;
+  }
+
+  UserModel _toUserModel(Map<String, dynamic> backendUser) {
+    final email = backendUser['email'] as String;
+    return UserModel(
+      id: 'user_${backendUser['id']}',
+      backendId: backendUser['id'] as int?,
+      email: email,
+      nome: backendUser['name'] as String? ?? email.split('@').first,
+    );
   }
 
   void logout() {

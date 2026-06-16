@@ -66,6 +66,47 @@ Certifique-se de que o Docker está rodando e execute:
 docker compose up -d
 ```
 
+Esse comando sobe:
+- PostgreSQL
+- Mosquitto MQTT
+- Backend Spring Boot
+
+Na primeira execução, o Docker também fará o build da imagem do backend. Quando alterar código do backend e quiser reconstruir a imagem, execute:
+
+```bash
+docker compose up -d --build
+```
+
+Para acompanhar os logs do backend:
+
+```bash
+docker compose logs -f backend
+```
+
+Para testar se o backend está respondendo:
+
+```bash
+curl http://localhost:8080/api/health
+```
+
+### Debug Local do Backend
+Se quiser debugar o backend fora do Docker, suba apenas as dependências:
+
+```bash
+docker compose up -d postgres mosquitto
+```
+
+Depois rode o backend localmente:
+
+```bash
+cd backend
+./gradlew bootRun
+```
+
+Nesse modo, o backend usa os valores padrão de desenvolvimento:
+- PostgreSQL em `localhost:5432`
+- MQTT em `localhost:1883`
+
 ### Acesso ao Banco pelo DBeaver
 Com a infraestrutura rodando, crie uma nova conexão PostgreSQL no DBeaver usando:
 
@@ -99,12 +140,6 @@ API_PORT=8080
 MQTT_PORT=1883
 ```
 *Nota: Utilize o IP da sua máquina na rede local para testes em dispositivos físicos.*
-
-### Execução do Backend
-```bash
-cd backend
-./gradlew bootRun
-```
 
 ### Execução do Frontend
 ```bash
