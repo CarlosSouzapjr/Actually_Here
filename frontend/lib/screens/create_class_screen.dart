@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
-import '../services/database_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import '../config/server_config.dart';
+import '../services/auth_service.dart';
 
 class CreateClassScreen extends StatefulWidget {
   const CreateClassScreen({super.key});
@@ -19,17 +18,25 @@ class _CreateClassScreenState extends State<CreateClassScreen> {
   final _subjectCodeController = TextEditingController();
   bool _isLoading = false;
 
-  final String _baseUrl = 'http://${dotenv.env['SERVER_IP']}:${dotenv.env['API_PORT']}/api/classes';
+  String get _baseUrl => ServerConfig.current.apiUrl('classes');
 
   Future<void> _createClass() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    final user = context.read<AuthService>().currentUser;
-    // No seu backend, o professorId é um Long. Vamos usar o ID do usuário logado.
-    // Como o AuthService atual é um mock, vamos garantir que enviamos um ID numérico válido para o backend.
-    final int professorId = 123; 
+    final professorId = context.read<AuthService>().currentUser?.backendId;
+    if (professorId == null) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Usuário não sincronizado com o servidor. Faça login novamente.',
+          ),
+        ),
+      );
+      return;
+    }
 
     try {
       final response = await http.post(
@@ -45,7 +52,9 @@ class _CreateClassScreenState extends State<CreateClassScreen> {
       if (response.statusCode == 201) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Turma criada com sucesso no servidor!')),
+            const SnackBar(
+              content: Text('Turma criada com sucesso no servidor!'),
+            ),
           );
           Navigator.pop(context);
         }
@@ -54,9 +63,9 @@ class _CreateClassScreenState extends State<CreateClassScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -94,10 +103,12 @@ class _CreateClassScreenState extends State<CreateClassScreen> {
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _isLoading ? null : _createClass,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: _isLoading 
-                  ? const CircularProgressIndicator() 
-                  : const Text('Criar Turma', style: TextStyle(fontSize: 16)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text('Criar Turma', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),

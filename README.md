@@ -66,10 +66,35 @@ Certifique-se de que o Docker está rodando e execute:
 docker compose up -d
 ```
 
+### Acesso ao Banco pelo DBeaver
+Com a infraestrutura rodando, crie uma nova conexão PostgreSQL no DBeaver usando:
+
+```text
+Host: localhost
+Porta: 5432
+Database: meubanco
+Username: admin
+Password: adminpassword
+```
+
+Passos no DBeaver:
+1. Clique em **Nova Conexão**.
+2. Escolha **PostgreSQL**.
+3. Preencha os dados acima.
+4. Clique em **Test Connection**.
+5. Se solicitado, permita que o DBeaver baixe o driver PostgreSQL.
+6. Clique em **Finish**.
+
+Se o teste de conexão falhar, confirme se o container está ativo:
+
+```bash
+docker compose ps
+```
+
 ### Configuração de Ambiente (Frontend)
 Crie um arquivo \`.env\` na raiz da pasta \`frontend/\` seguindo o modelo:
 ```env
-SERVER_IP=192.168.x.x // localhost = 127.0.0.1
+SERVER_IP=192.168.x.x # localhost = 127.0.0.1
 API_PORT=8080
 MQTT_PORT=1883
 ```

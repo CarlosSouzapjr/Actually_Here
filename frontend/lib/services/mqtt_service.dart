@@ -1,25 +1,28 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/server_config.dart';
 
 class MqttService {
   late MqttServerClient client;
 
   MqttService() {
-    String brokerAddress = dotenv.env['SERVER_IP'] ?? 'localhost';
-    int port = int.parse(dotenv.env['MQTT_PORT'] ?? '1883');
-    
-    client = MqttServerClient(brokerAddress, 'flutter_client_${DateTime.now().millisecondsSinceEpoch}');
-    client.port = port;
+    final endpoint = ServerConfig.current;
+
+    client = MqttServerClient(
+      endpoint.host,
+      'flutter_client_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    client.port = endpoint.mqttPort;
     client.keepAlivePeriod = 20;
     client.onDisconnected = onDisconnected;
     client.onConnected = onConnected;
     client.logging(on: false);
 
     final connMess = MqttConnectMessage()
-        .withClientIdentifier('flutter_client_${DateTime.now().millisecondsSinceEpoch}')
+        .withClientIdentifier(
+          'flutter_client_${DateTime.now().millisecondsSinceEpoch}',
+        )
         .startClean()
         .withWillQos(MqttQos.atLeastOnce);
     client.connectionMessage = connMess;

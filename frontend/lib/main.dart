@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'screens/login.dart';
+import 'screens/server_connection_screen.dart';
 import 'services/auth_service.dart';
 import 'services/database_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  
+
   runApp(
     MultiProvider(
       providers: [
@@ -32,7 +32,7 @@ class ActuallyHereApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2563EB)),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: const ServerConnectionScreen(),
     );
   }
 }
