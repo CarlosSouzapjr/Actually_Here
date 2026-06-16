@@ -27,7 +27,7 @@ class _ServerConnectionScreenState extends State<ServerConnectionScreen> {
     _hostController = TextEditingController(text: endpoint.host);
     _apiPortController = TextEditingController(text: '${endpoint.apiPort}');
     _mqttPortController = TextEditingController(text: '${endpoint.mqttPort}');
-    _autoDiscover();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoDiscover());
   }
 
   @override

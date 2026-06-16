@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ServerEndpoint {
   const ServerEndpoint({
@@ -18,7 +17,13 @@ class ServerEndpoint {
 
 class ServerConfig {
   static final ValueNotifier<ServerEndpoint> endpoint =
-      ValueNotifier<ServerEndpoint>(_fromEnv());
+      ValueNotifier<ServerEndpoint>(_defaultEndpoint);
+
+  static const ServerEndpoint _defaultEndpoint = ServerEndpoint(
+    host: 'localhost',
+    apiPort: 8080,
+    mqttPort: 1883,
+  );
 
   static ServerEndpoint get current => endpoint.value;
 
@@ -27,16 +32,6 @@ class ServerConfig {
       host: host.trim(),
       apiPort: apiPort ?? current.apiPort,
       mqttPort: mqttPort ?? current.mqttPort,
-    );
-  }
-
-  static ServerEndpoint _fromEnv() {
-    return ServerEndpoint(
-      host: dotenv.env['SERVER_IP']?.trim().isNotEmpty == true
-          ? dotenv.env['SERVER_IP']!.trim()
-          : 'localhost',
-      apiPort: int.tryParse(dotenv.env['API_PORT'] ?? '') ?? 8080,
-      mqttPort: int.tryParse(dotenv.env['MQTT_PORT'] ?? '') ?? 1883,
     );
   }
 }

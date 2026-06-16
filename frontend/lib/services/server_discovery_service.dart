@@ -62,7 +62,22 @@ class ServerDiscoveryService {
       }
     }
 
-    return prefixes.toList();
+    final sortedPrefixes = prefixes.toList()
+      ..sort((a, b) => _prefixPriority(a).compareTo(_prefixPriority(b)));
+    return sortedPrefixes;
+  }
+
+  int _prefixPriority(String prefix) {
+    final parts = prefix.split('.');
+    if (parts.length != 3) return 4;
+
+    final first = int.tryParse(parts[0]) ?? -1;
+    final second = int.tryParse(parts[1]) ?? -1;
+
+    if (first == 192 && second == 168) return 0;
+    if (first == 172 && second >= 16 && second <= 31) return 1;
+    if (first == 10) return 2;
+    return 3;
   }
 
   bool _isIgnoredAddress(List<String> parts) {

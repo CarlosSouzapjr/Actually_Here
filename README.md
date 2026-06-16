@@ -132,14 +132,18 @@ Se o teste de conexão falhar, confirme se o container está ativo:
 docker compose ps
 ```
 
-### Configuração de Ambiente (Frontend)
-Crie um arquivo \`.env\` na raiz da pasta \`frontend/\` seguindo o modelo:
-```env
-SERVER_IP=192.168.x.x # localhost = 127.0.0.1
-API_PORT=8080
-MQTT_PORT=1883
+### Configuração do Servidor no App
+Ao abrir o app, a tela **Servidor** tenta encontrar automaticamente o backend ativo na rede local. Para testes em celular físico, conecte o celular na mesma rede Wi-Fi do computador que está rodando o Docker.
+
+Se a busca automática não encontrar o backend, informe manualmente:
+
+```text
+IP/host: IP da máquina na rede local
+Porta API: 8080
+Porta MQTT: 1883
 ```
-*Nota: Utilize o IP da sua máquina na rede local para testes em dispositivos físicos.*
+
+Depois clique em **Testar conexão** e siga para o login.
 
 ### Execução do Frontend
 ```bash
