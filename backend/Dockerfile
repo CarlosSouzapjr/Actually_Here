@@ -8,6 +8,7 @@ COPY build.gradle.kts settings.gradle.kts ./
 COPY src src
 
 RUN chmod +x ./gradlew
+RUN sed -i -e 's/\r$//' gradlew
 RUN ./gradlew bootJar --no-daemon
 RUN find build/libs -name "*.jar" ! -name "*plain.jar" -exec cp {} /app.jar \;
 

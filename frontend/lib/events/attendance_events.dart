@@ -1,0 +1,96 @@
+sealed class AttendanceEvent {
+  const AttendanceEvent({
+    required this.message,
+    DateTime? occurredAt,
+  }) : occurredAt = occurredAt ?? DateTime.now();
+
+  final String message;
+  final DateTime occurredAt;
+}
+
+class AttendanceSessionStarted extends AttendanceEvent {
+  const AttendanceSessionStarted({
+    required this.classId,
+    required this.sessionId,
+    super.occurredAt,
+  }) : super(message: 'Sessao de presenca iniciada.');
+
+  final int classId;
+  final int sessionId;
+}
+
+class AttendanceSessionEnded extends AttendanceEvent {
+  const AttendanceSessionEnded({
+    required this.sessionId,
+    super.occurredAt,
+  }) : super(message: 'Sessao de presenca encerrada.');
+
+  final int sessionId;
+}
+
+class ActiveAttendanceSessionFound extends AttendanceEvent {
+  const ActiveAttendanceSessionFound({
+    required this.classId,
+    required this.sessionId,
+    super.occurredAt,
+  }) : super(message: 'Sessao ativa encontrada.');
+
+  final int classId;
+  final int sessionId;
+}
+
+class BeaconBroadcastStarted extends AttendanceEvent {
+  const BeaconBroadcastStarted({
+    required this.beaconUuid,
+    super.occurredAt,
+  }) : super(message: 'Beacon iniciado.');
+
+  final String beaconUuid;
+}
+
+class BeaconBroadcastStopped extends AttendanceEvent {
+  const BeaconBroadcastStopped({super.occurredAt})
+      : super(message: 'Beacon parado.');
+}
+
+class ProfessorBeaconFound extends AttendanceEvent {
+  const ProfessorBeaconFound({
+    required this.distance,
+    super.occurredAt,
+  }) : super(message: 'Professor encontrado.');
+
+  final double distance;
+}
+
+class PresencePingPublished extends AttendanceEvent {
+  const PresencePingPublished({
+    required this.classId,
+    required this.studentId,
+    required this.distance,
+    super.occurredAt,
+  }) : super(message: 'Ping de presenca publicado.');
+
+  final int classId;
+  final int studentId;
+  final double distance;
+}
+
+class MqttConnected extends AttendanceEvent {
+  const MqttConnected({super.occurredAt}) : super(message: 'MQTT conectado.');
+}
+
+class MqttDisconnected extends AttendanceEvent {
+  const MqttDisconnected({super.occurredAt})
+      : super(message: 'MQTT desconectado.');
+}
+
+class AttendanceError extends AttendanceEvent {
+  const AttendanceError({
+    required this.source,
+    required this.error,
+    super.occurredAt,
+  }) : super(message: 'Erro em $source: $error');
+
+  final String source;
+  final Object error;
+}
