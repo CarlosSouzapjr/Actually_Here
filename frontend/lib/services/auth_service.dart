@@ -75,8 +75,7 @@ class AuthService extends ChangeNotifier {
   UserModel _toUserModel(Map<String, dynamic> backendUser) {
     final email = backendUser['email'] as String;
     return UserModel(
-      id: 'user_${backendUser['id']}',
-      backendId: backendUser['id'] as int?,
+      id: backendUser['id'] as int,
       email: email,
       nome: backendUser['name'] as String? ?? email.split('@').first,
     );

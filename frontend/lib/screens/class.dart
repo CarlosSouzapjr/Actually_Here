@@ -56,7 +56,7 @@ class _ClassScreenState extends State<ClassScreen> {
       });
       // Verifica se é o professor e escuta o MQTT
       final user = context.read<AuthService>().currentUser;
-      final isProfessor = user?.backendId == widget.professorId && widget.professorId != null;
+      final isProfessor = user?.id == widget.professorId && widget.professorId != null;
       if (isProfessor) {
         _startListeningToMqtt();
       }
@@ -131,8 +131,8 @@ class _ClassScreenState extends State<ClassScreen> {
         _scannerService.stopScanning();
         final user = context.read<AuthService>().currentUser;
         
-        if (user != null && user.backendId != null) {
-          _mqttService.publishPresence(widget.turmaId, user.backendId!, distance);
+        if (user != null) {
+          _mqttService.publishPresence(widget.turmaId, user.id, distance);
           setState(() {
             _isScanning = false;
             _statusAluno = 'Presença confirmada! Distância: ${distance.toStringAsFixed(2)}m';
@@ -155,7 +155,7 @@ class _ClassScreenState extends State<ClassScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthService>().currentUser;
-    final isProfessor = user?.backendId == widget.professorId && widget.professorId != null;
+    final isProfessor = user?.id == widget.professorId && widget.professorId != null;
 
     return Scaffold(
       appBar: AppBar(

@@ -25,7 +25,7 @@ class _CreateClassScreenState extends State<CreateClassScreen> {
 
     setState(() => _isLoading = true);
 
-    final professorId = context.read<AuthService>().currentUser?.backendId;
+    final professorId = context.read<AuthService>().currentUser?.id;
     if (professorId == null) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
