@@ -25,7 +25,88 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadClasses() {
-    _classesFuture = _classService.fetchClasses();
+    final user = context.read<AuthService>().currentUser;
+    if (user != null) {
+      _classesFuture = _classService.fetchClasses(user.id);
+    } else {
+      _classesFuture = Future.value([]);
+    }
+  }
+
+  void _showEnrollDialog() {
+    final TextEditingController classIdController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Entrar em Turma'),
+              content: TextField(
+                controller: classIdController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'ID da Turma',
+                  hintText: 'Ex: 123',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final input = classIdController.text.trim();
+                          if (input.isEmpty) return;
+                          
+                          final classId = int.tryParse(input);
+                          if (classId == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('ID inválido')),
+                            );
+                            return;
+                          }
+
+                          setStateDialog(() => isSubmitting = true);
+                          
+                          final user = context.read<AuthService>().currentUser;
+                          if (user != null) {
+                            final success = await _classService.enrollStudent(classId, user.id);
+                            if (success) {
+                              if (mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Matriculado com sucesso!')),
+                                );
+                                setState(() {
+                                  _loadClasses();
+                                });
+                              }
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Erro ao matricular. Turma já cadastrada ou não existe.')),
+                                );
+                              }
+                              setStateDialog(() => isSubmitting = false);
+                            }
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Entrar'),
+                ),
+              ],
+            );
+          }
+        );
+      },
+    );
   }
 
   @override
@@ -87,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
-                        title: Text(turma.name),
+                        title: Text('${turma.name} (ID: ${turma.id})'),
                         subtitle: Text('${turma.subjectCode} - ${turma.professor ?? 'Sem Professor'}'),
                         leading: const CircleAvatar(child: Icon(Icons.class_)),
                         onTap: () async {
@@ -117,18 +198,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateClassScreen()),
-          );
-          // Refresh classes after returning from create screen
-          setState(() {
-            _loadClasses();
-          });
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'enrollBtn',
+            onPressed: _showEnrollDialog,
+            icon: const Icon(Icons.person_add),
+            label: const Text('Entrar em Turma'),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton.extended(
+            heroTag: 'createBtn',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CreateClassScreen()),
+              );
+              // Refresh classes after returning from create screen
+              setState(() {
+                _loadClasses();
+              });
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Criar Turma'),
+          ),
+        ],
       ),
     );
   }

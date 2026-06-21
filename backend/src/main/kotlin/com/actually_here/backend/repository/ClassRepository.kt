@@ -12,4 +12,7 @@ interface ClassRepository : JpaRepository<Class, Long> {
     // Ajustamos para ler a entidade UserClass e buscar a propriedade classroom/user/role
     @Query("SELECT uc.classroom FROM UserClass uc WHERE uc.user.id = :userId AND uc.role = :role")
     fun findByUserIdAndRole(userId: Long, role: TipoMembro): List<Class>
+
+    @Query("SELECT uc.classroom FROM UserClass uc WHERE uc.user.id = :userId")
+    fun findByUserId(userId: Long): List<Class>
 }

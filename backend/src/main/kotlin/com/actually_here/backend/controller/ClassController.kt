@@ -43,10 +43,34 @@ class ClassController(
     @GetMapping
     fun listarTodas(): List<Class> = classRepository.findAll()
 
-    // Essa rota usará a nossa @Query personalizada!
-    @GetMapping("/professor/{id}")
-    fun listByProfessor(@PathVariable id: Long): List<Class> {
-        return classRepository.findByUserIdAndRole(id, TipoMembro.PROFESSOR)
+    @GetMapping("/user/{id}")
+    fun listByUser(@PathVariable id: Long): List<Class> {
+        return classRepository.findByUserId(id)
+    }
+
+    @PostMapping("/{classId}/enroll/{studentId}")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun enrollStudent(@PathVariable classId: Long, @PathVariable studentId: Long): Class {
+        val classroom = classRepository.findById(classId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada") }
+            
+        val student = userRepository.findById(studentId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Aluno não encontrado") }
+
+        // Verifica se já está matriculado
+        val isEnrolled = userClassRepository.findAll().any { it.classroom.id == classId && it.user.id == studentId }
+        if (isEnrolled) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuário já está matriculado nesta turma")
+        }
+
+        val userClass = UserClass(
+            classroom = classroom,
+            user = student,
+            role = TipoMembro.STUDENT
+        )
+        userClassRepository.save(userClass)
+        
+        return classroom
     }
 }
 
