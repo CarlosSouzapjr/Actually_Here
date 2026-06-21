@@ -1,5 +1,5 @@
 sealed class AttendanceEvent {
-  const AttendanceEvent({
+  AttendanceEvent({
     required this.message,
     DateTime? occurredAt,
   }) : occurredAt = occurredAt ?? DateTime.now();
@@ -9,7 +9,7 @@ sealed class AttendanceEvent {
 }
 
 class AttendanceSessionStarted extends AttendanceEvent {
-  const AttendanceSessionStarted({
+  AttendanceSessionStarted({
     required this.classId,
     required this.sessionId,
     super.occurredAt,
@@ -20,7 +20,7 @@ class AttendanceSessionStarted extends AttendanceEvent {
 }
 
 class AttendanceSessionEnded extends AttendanceEvent {
-  const AttendanceSessionEnded({
+  AttendanceSessionEnded({
     required this.sessionId,
     super.occurredAt,
   }) : super(message: 'Sessao de presenca encerrada.');
@@ -29,7 +29,7 @@ class AttendanceSessionEnded extends AttendanceEvent {
 }
 
 class ActiveAttendanceSessionFound extends AttendanceEvent {
-  const ActiveAttendanceSessionFound({
+  ActiveAttendanceSessionFound({
     required this.classId,
     required this.sessionId,
     super.occurredAt,
@@ -40,7 +40,7 @@ class ActiveAttendanceSessionFound extends AttendanceEvent {
 }
 
 class BeaconBroadcastStarted extends AttendanceEvent {
-  const BeaconBroadcastStarted({
+  BeaconBroadcastStarted({
     required this.beaconUuid,
     super.occurredAt,
   }) : super(message: 'Beacon iniciado.');
@@ -49,12 +49,12 @@ class BeaconBroadcastStarted extends AttendanceEvent {
 }
 
 class BeaconBroadcastStopped extends AttendanceEvent {
-  const BeaconBroadcastStopped({super.occurredAt})
+  BeaconBroadcastStopped({super.occurredAt})
       : super(message: 'Beacon parado.');
 }
 
 class ProfessorBeaconFound extends AttendanceEvent {
-  const ProfessorBeaconFound({
+  ProfessorBeaconFound({
     required this.distance,
     super.occurredAt,
   }) : super(message: 'Professor encontrado.');
@@ -63,7 +63,7 @@ class ProfessorBeaconFound extends AttendanceEvent {
 }
 
 class PresencePingPublished extends AttendanceEvent {
-  const PresencePingPublished({
+  PresencePingPublished({
     required this.classId,
     required this.studentId,
     required this.distance,
@@ -76,16 +76,16 @@ class PresencePingPublished extends AttendanceEvent {
 }
 
 class MqttConnected extends AttendanceEvent {
-  const MqttConnected({super.occurredAt}) : super(message: 'MQTT conectado.');
+  MqttConnected({super.occurredAt}) : super(message: 'MQTT conectado.');
 }
 
 class MqttDisconnected extends AttendanceEvent {
-  const MqttDisconnected({super.occurredAt})
+  MqttDisconnected({super.occurredAt})
       : super(message: 'MQTT desconectado.');
 }
 
 class AttendanceError extends AttendanceEvent {
-  const AttendanceError({
+  AttendanceError({
     required this.source,
     required this.error,
     super.occurredAt,
