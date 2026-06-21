@@ -28,25 +28,26 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: actually_here_backend
+    # container_name e ports REMOVIDOS para permitir a escala (--scale backend=3)
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/meubanco
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: adminpassword
       MQTT_BROKER_URL: tcp://mosquitto:1883
-    ports:
-      - "8080:8080"
+      ZOOKEEPER_URL: zookeeper:2181 # Adicionado para o backend achar o ZK na rede Docker
     depends_on:
       postgres:
         condition: service_healthy
       mosquitto:
         condition: service_started
+      zookeeper:
+        condition: service_started # Garante que o ZK suba antes do backend
 
   zookeeper:
-      image: zookeeper:3.9
-      container_name: zookeeper
-      ports:
-        - "2181:2181"
-      environment:
-        ZOO_MY_ID: 1
-        ZOO_PORT: 2181
+    image: zookeeper:3.9
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181

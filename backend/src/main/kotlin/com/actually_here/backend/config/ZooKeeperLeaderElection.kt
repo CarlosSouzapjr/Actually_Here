@@ -24,14 +24,19 @@ class ZooKeeperLeaderElection : Watcher {
 
     private fun connectToZookeeper() {
         val connectedSignal = CountDownLatch(1)
-        // Conecta ao ZK. O "this" significa que esta classe vai ouvir os eventos
-        zk = ZooKeeper("localhost:2181", 3000, { event ->
+        
+        // Lemos a variável de ambiente do Docker. Se não existir, usamos localhost
+        val zkHost = System.getenv("ZOOKEEPER_URL") ?: "localhost:2181"
+
+        // Conecta ao ZK usando a variável dinâmica
+        zk = ZooKeeper(zkHost, 3000) { event ->
             if (event.state == Watcher.Event.KeeperState.SyncConnected) {
                 connectedSignal.countDown()
             }
-        })
+        }
+        
         connectedSignal.await() // Espera conectar
-        logger.info("Conectado ao ZooKeeper puro!")
+        logger.info("Conectado ao ZooKeeper no endereço: $zkHost")
         
         // Cria a pasta raiz se não existir
         if (zk.exists(ELECTION_NAMESPACE, false) == null) {
