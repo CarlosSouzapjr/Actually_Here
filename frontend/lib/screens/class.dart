@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/database_service.dart';
+import '../services/attendance_service.dart';
+import '../services/mqtt_service.dart';
 import '../services/proximity/professor_beacon_service.dart';
 import '../services/proximity/student_scanner_service.dart';
 import 'proximity_test_screen.dart';
 
 class ClassScreen extends StatefulWidget {
-  final String turmaId;
+  final int turmaId;
   final String nomeTurma;
   final String professor;
-  final String professorId;
+  final int? professorId;
   final String beaconUuid;
 
   const ClassScreen({
@@ -29,23 +30,76 @@ class ClassScreen extends StatefulWidget {
 class _ClassScreenState extends State<ClassScreen> {
   final ProfessorBeaconService _beaconService = ProfessorBeaconService();
   final StudentScannerService _scannerService = StudentScannerService();
+  final AttendanceService _attendanceService = AttendanceService();
+  final MqttService _mqttService = MqttService();
   
   bool _isScanning = false;
   String _statusAluno = '';
+
+  bool _isChamadaAtiva = false;
+  int? _activeSessionId;
+  final List<String> _alunosPresentes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _mqttService.connect();
+    _checkActiveSession();
+  }
+
+  Future<void> _checkActiveSession() async {
+    final sessionData = await _attendanceService.getActiveSession(widget.turmaId);
+    if (sessionData != null && mounted) {
+      setState(() {
+        _isChamadaAtiva = true;
+        _activeSessionId = sessionData['id'];
+      });
+      // Verifica se é o professor e escuta o MQTT
+      final user = context.read<AuthService>().currentUser;
+      final isProfessor = user?.backendId == widget.professorId && widget.professorId != null;
+      if (isProfessor) {
+        _startListeningToMqtt();
+      }
+    }
+  }
+
+  void _startListeningToMqtt() {
+    _mqttService.subscribeToClass(widget.turmaId, (studentId, distance) {
+      // Como não temos a rota para buscar o nome do aluno ainda, mockamos visualmente o nome.
+      final studentName = 'Aluno ID: $studentId';
+      if (!_alunosPresentes.contains(studentName) && mounted) {
+        setState(() {
+          _alunosPresentes.add(studentName);
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
     _beaconService.stopBroadcasting();
     _scannerService.stopScanning();
+    _mqttService.unsubscribeFromClass(widget.turmaId);
+    _mqttService.disconnect();
     super.dispose();
   }
 
   void _iniciarChamadaProfessor() async {
     try {
-      context.read<DatabaseService>().iniciarChamada(widget.turmaId);
-      await _beaconService.startBroadcasting(widget.beaconUuid);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chamada iniciada!')));
+      final sessionData = await _attendanceService.startSession(widget.turmaId);
+      if (sessionData != null) {
+        setState(() {
+          _isChamadaAtiva = true;
+          _activeSessionId = sessionData['id'];
+          _alunosPresentes.clear();
+        });
+        await _beaconService.startBroadcasting(widget.beaconUuid);
+        _startListeningToMqtt();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chamada iniciada!')));
+        }
+      } else {
+        throw Exception('Falha ao iniciar sessão no backend.');
       }
     } catch (e) {
       if (mounted) {
@@ -54,9 +108,16 @@ class _ClassScreenState extends State<ClassScreen> {
     }
   }
 
-  void _pararChamadaProfessor() {
-    context.read<DatabaseService>().pararChamada(widget.turmaId);
+  void _pararChamadaProfessor() async {
+    if (_activeSessionId != null) {
+      await _attendanceService.endSession(_activeSessionId!);
+    }
+    setState(() {
+      _isChamadaAtiva = false;
+      _activeSessionId = null;
+    });
     _beaconService.stopBroadcasting();
+    _mqttService.unsubscribeFromClass(widget.turmaId);
   }
 
   void _marcarPresencaAluno() {
@@ -69,12 +130,19 @@ class _ClassScreenState extends State<ClassScreen> {
       if (distance >= 0 && distance < 10.0) { // 10 metros de tolerância
         _scannerService.stopScanning();
         final user = context.read<AuthService>().currentUser;
-        context.read<DatabaseService>().registrarPresenca(user?.nome ?? 'Aluno Desconhecido');
         
-        setState(() {
-          _isScanning = false;
-          _statusAluno = 'Presença confirmada! Distância: ${distance.toStringAsFixed(2)}m';
-        });
+        if (user != null && user.backendId != null) {
+          _mqttService.publishPresence(widget.turmaId, user.backendId!, distance);
+          setState(() {
+            _isScanning = false;
+            _statusAluno = 'Presença confirmada! Distância: ${distance.toStringAsFixed(2)}m';
+          });
+        } else {
+          setState(() {
+            _isScanning = false;
+            _statusAluno = 'Erro: Usuário não sincronizado no backend.';
+          });
+        }
       }
     }, onError: (e) {
       setState(() {
@@ -87,8 +155,7 @@ class _ClassScreenState extends State<ClassScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthService>().currentUser;
-    final isProfessor = user?.id == widget.professorId;
-    final db = context.watch<DatabaseService>();
+    final isProfessor = user?.backendId == widget.professorId && widget.professorId != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -118,17 +185,17 @@ class _ClassScreenState extends State<ClassScreen> {
               const Text('Painel do Professor', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               
-              if (db.isChamadaAtiva) ...[
+              if (_isChamadaAtiva) ...[
                 const Text('Chamada em andamento...', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('Alunos presentes: ${db.alunosPresentes.length}'),
+                Text('Alunos presentes: ${_alunosPresentes.length}'),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: db.alunosPresentes.length,
+                    itemCount: _alunosPresentes.length,
                     itemBuilder: (context, i) {
                       return ListTile(
                         leading: const Icon(Icons.check_circle, color: Colors.green),
-                        title: Text(db.alunosPresentes[i]),
+                        title: Text(_alunosPresentes[i]),
                       );
                     },
                   ),
@@ -156,7 +223,7 @@ class _ClassScreenState extends State<ClassScreen> {
               const Text('Painel do Aluno', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               
-              if (db.alunosPresentes.contains(user?.nome)) ...[
+              if (_statusAluno.contains('confirmada')) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
