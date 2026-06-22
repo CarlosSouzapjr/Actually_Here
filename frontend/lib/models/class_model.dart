@@ -21,6 +21,8 @@ class ClassModel {
       id: json['id'] as int,
       name: json['name'] as String,
       subjectCode: json['subjectCode'] as String,
+      professor: json['professor'] as String?,
+      professorId: json['professorId'] as int?,
     );
   }
 

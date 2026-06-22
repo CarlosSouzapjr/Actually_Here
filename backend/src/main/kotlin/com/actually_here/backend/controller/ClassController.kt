@@ -18,9 +18,21 @@ class ClassController(
     private val userRepository: UserRepository
 ) {
 
+    private fun Class.toResponse(): ClassResponse {
+        val professors = this.id?.let { userClassRepository.findByClassroomIdAndRole(it, TipoMembro.PROFESSOR) } ?: emptyList()
+        val professor = professors.firstOrNull()?.user
+        return ClassResponse(
+            id = this.id,
+            name = this.name,
+            subjectCode = this.subjectCode,
+            professor = professor?.name,
+            professorId = professor?.id
+        )
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody request: ClassRequest): Class {
+    fun create(@RequestBody request: ClassRequest): ClassResponse {
         val userCreator = userRepository.findById(request.professorId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado") }
         
@@ -37,20 +49,20 @@ class ClassController(
         )
         userClassRepository.save(userClass)
         
-        return novaTurma
+        return novaTurma.toResponse()
     }
 
     @GetMapping
-    fun listarTodas(): List<Class> = classRepository.findAll()
+    fun listarTodas(): List<ClassResponse> = classRepository.findAll().map { it.toResponse() }
 
     @GetMapping("/user/{id}")
-    fun listByUser(@PathVariable id: Long): List<Class> {
-        return classRepository.findByUserId(id)
+    fun listByUser(@PathVariable id: Long): List<ClassResponse> {
+        return classRepository.findByUserId(id).map { it.toResponse() }
     }
 
     @PostMapping("/{classId}/enroll/{studentId}")
     @ResponseStatus(HttpStatus.CREATED)
-    fun enrollStudent(@PathVariable classId: Long, @PathVariable studentId: Long): Class {
+    fun enrollStudent(@PathVariable classId: Long, @PathVariable studentId: Long): ClassResponse {
         val classroom = classRepository.findById(classId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Turma não encontrada") }
             
@@ -70,7 +82,7 @@ class ClassController(
         )
         userClassRepository.save(userClass)
         
-        return classroom
+        return classroom.toResponse()
     }
 }
 
@@ -78,4 +90,12 @@ data class ClassRequest(
     val name: String,
     val subjectCode: String,
     val professorId: Long 
+)
+
+data class ClassResponse(
+    val id: Long?,
+    val name: String,
+    val subjectCode: String,
+    val professor: String?,
+    val professorId: Long?
 )
