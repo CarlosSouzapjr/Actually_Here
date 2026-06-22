@@ -27,6 +27,7 @@ dependencies {
 	implementation("org.springframework.integration:spring-integration-mqtt")
 	implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")

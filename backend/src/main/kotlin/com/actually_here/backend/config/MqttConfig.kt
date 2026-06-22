@@ -49,9 +49,13 @@ class MqttConfig(
     }
 
     @Bean
-    fun inbound(): MessageProducer {
+    @Bean
+    fun inbound(): MqttPahoMessageDrivenChannelAdapter { // Mudamos o tipo de retorno aqui!
+        // Criamos um ID único para cada instância não brigar no broker
+        val clientId = "backend-subscriber-${java.util.UUID.randomUUID()}"
+        
         val adapter = MqttPahoMessageDrivenChannelAdapter(
-            "backend-subscriber", 
+            clientId, 
             mqttClientFactory(), 
             "presenca/+/+"
         )
@@ -59,6 +63,10 @@ class MqttConfig(
         adapter.setConverter(DefaultPahoMessageConverter())
         adapter.setQos(1)
         adapter.setOutputChannel(mqttInputChannel())
+        
+        // Desliga o início automático! O ZooKeeper que vai mandar ligar.
+        adapter.isAutoStartup = false 
+        
         return adapter
     }
 
@@ -91,10 +99,10 @@ class MqttConfig(
                                 distance = distance
                             )
                             attendanceRecordRepository.save(record)
-                            println("Presença registrada: Aluno ${user.get().name} na Turma ${classId} (Distância: $distance m)")
+                            println("Presenca registrada: Aluno ${user.get().name} na Turma ${classId} (Distancia: $distance m)")
                         }
                     } else {
-                        println("Aviso: Ping recebido para turma $classId, mas não há sessão ativa.")
+                        println("Aviso: Ping recebido para turma $classId, mas nao ha sessao ativa.")
                     }
                 }
             } catch (e: Exception) {
