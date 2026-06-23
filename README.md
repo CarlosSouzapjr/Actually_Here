@@ -58,6 +58,10 @@ Sistema automatizado de controle de frequência acadêmica baseado em proximidad
 - [ ] PoC de check-in inicial via reconhecimento facial (Google ML Kit).
 - [ ] Integração do token de face com o ID do aluno no ping de presença.
 
+### 6. Sugestoes
+- [ ] Adicionar no banco o campo beaconUuid na entidade Class
+
+
 ## 🛠️ Instruções de Configuração de Serviços
 
 ### Inicialização da Infraestrutura
