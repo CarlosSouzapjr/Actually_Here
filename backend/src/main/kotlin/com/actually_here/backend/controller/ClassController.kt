@@ -60,6 +60,11 @@ class ClassController(
         return classRepository.findByUserId(id).map { it.toResponse() }
     }
 
+    @GetMapping("/professor/{professorId}")
+    fun listByProfessor(@PathVariable professorId: Long): List<ClassResponse> {
+        return classRepository.findByUserIdAndRole(professorId, TipoMembro.PROFESSOR).map { it.toResponse() }
+    }
+
     @PostMapping("/{classId}/enroll/{studentId}")
     @ResponseStatus(HttpStatus.CREATED)
     fun enrollStudent(@PathVariable classId: Long, @PathVariable studentId: Long): ClassResponse {
